@@ -1,15 +1,47 @@
-import React from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
+import debounce from 'lodash.debounce';
 import './App.scss';
 import { peopleFromServer } from './data/people';
+import { DropDownMenu } from './components/DropdownMenu';
 
 export const App: React.FC = () => {
-  const { name, born, died } = peopleFromServer[0];
+  const [selectPerson, setSelectPerson] = useState('');
+  const [appliedQuery, setAppliedQuery] = useState('');
+
+  const applyQuery = useCallback(debounce(setAppliedQuery, 1000), []);
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+
+    setSelectPerson(value);
+
+    if (value === '') {
+      setAppliedQuery('');
+    } else {
+      applyQuery(value);
+    }
+  };
+
+  const filteredPeople = useMemo(() => {
+    return peopleFromServer.filter(person =>
+      person.name
+        .toLowerCase()
+        .trim()
+        .includes(appliedQuery.toLowerCase().trim()),
+    );
+  }, [appliedQuery]);
+
+  const { name, born, died } = filteredPeople[0] || [];
 
   return (
     <div className="container">
       <main className="section is-flex is-flex-direction-column">
         <h1 className="title" data-cy="title">
-          {`${name} (${born} - ${died})`}
+          {selectPerson &&
+          filteredPeople.length > 0 &&
+          selectPerson === appliedQuery
+            ? `${name} (${born} - ${died})`
+            : 'No selected person'}
         </h1>
 
         <div className="dropdown is-active">
@@ -19,55 +51,28 @@ export const App: React.FC = () => {
               placeholder="Enter a part of the name"
               className="input"
               data-cy="search-input"
+              onChange={handleChange}
+              value={selectPerson}
             />
           </div>
 
-          <div className="dropdown-menu" role="menu" data-cy="suggestions-list">
-            <div className="dropdown-content">
-              <div className="dropdown-item" data-cy="suggestion-item">
-                <p className="has-text-link">Pieter Haverbeke</p>
-              </div>
-
-              <div className="dropdown-item" data-cy="suggestion-item">
-                <p className="has-text-link">Pieter Bernard Haverbeke</p>
-              </div>
-
-              <div className="dropdown-item" data-cy="suggestion-item">
-                <p className="has-text-link">Pieter Antone Haverbeke</p>
-              </div>
-
-              <div className="dropdown-item" data-cy="suggestion-item">
-                <p className="has-text-danger">Elisabeth Haverbeke</p>
-              </div>
-
-              <div className="dropdown-item" data-cy="suggestion-item">
-                <p className="has-text-link">Pieter de Decker</p>
-              </div>
-
-              <div className="dropdown-item" data-cy="suggestion-item">
-                <p className="has-text-danger">Petronella de Decker</p>
-              </div>
-
-              <div className="dropdown-item" data-cy="suggestion-item">
-                <p className="has-text-danger">Elisabeth Hercke</p>
-              </div>
-            </div>
+          <DropDownMenu people={filteredPeople} />
+        </div>
+        {!filteredPeople.length && (
+          <div
+            className="
+                    notification
+                    is-danger
+                    is-light
+                    mt-3
+                    is-align-self-flex-start
+                  "
+            role="alert"
+            data-cy="no-suggestions-message"
+          >
+            <p className="has-text-danger">No matching suggestions</p>
           </div>
-        </div>
-
-        <div
-          className="
-            notification
-            is-danger
-            is-light
-            mt-3
-            is-align-self-flex-start
-          "
-          role="alert"
-          data-cy="no-suggestions-message"
-        >
-          <p className="has-text-danger">No matching suggestions</p>
-        </div>
+        )}
       </main>
     </div>
   );
