@@ -36,7 +36,7 @@ export const App: React.FC = () => {
   };
 
   useEffect(() => {
-    if (selectPerson.trim()) {
+    if (selectPerson.trim() && filteredPeople.length) {
       const { name, born, died } = filteredPeople[0];
 
       setSelectedPersonData({ name, born, died });
@@ -69,7 +69,7 @@ export const App: React.FC = () => {
           <DropDownMenu people={filteredPeople} />
         </div>
 
-        {!filteredPeople.length && (
+        {filteredPeople.length === 0 && (
           <div
             className="
                       notification
