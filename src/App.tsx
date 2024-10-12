@@ -1,26 +1,17 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import debounce from 'lodash.debounce';
 import './App.scss';
 import { peopleFromServer } from './data/people';
 import { DropDownMenu } from './components/DropdownMenu';
+import { PersonData } from './types/PersonData';
 
 export const App: React.FC = () => {
   const [selectPerson, setSelectPerson] = useState('');
   const [appliedQuery, setAppliedQuery] = useState('');
+  const [selectedPersonData, setSelectedPersonData] =
+    useState<PersonData | null>(null);
 
   const applyQuery = useCallback(debounce(setAppliedQuery, 1000), []);
-
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-
-    setSelectPerson(value);
-
-    if (value === '') {
-      setAppliedQuery('');
-    } else {
-      applyQuery(value);
-    }
-  };
 
   const filteredPeople = useMemo(() => {
     return peopleFromServer.filter(person =>
@@ -31,16 +22,35 @@ export const App: React.FC = () => {
     );
   }, [appliedQuery]);
 
-  const { name, born, died } = filteredPeople[0] || [];
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+
+    setSelectPerson(value);
+
+    if (!value.trim()) {
+      setAppliedQuery('');
+      setSelectedPersonData(null);
+    } else {
+      applyQuery(value);
+    }
+  };
+
+  useEffect(() => {
+    if (selectPerson.trim()) {
+      const { name, born, died } = filteredPeople[0];
+
+      setSelectedPersonData({ name, born, died });
+    } else {
+      setSelectedPersonData(null);
+    }
+  }, [filteredPeople]);
 
   return (
     <div className="container">
       <main className="section is-flex is-flex-direction-column">
         <h1 className="title" data-cy="title">
-          {selectPerson &&
-          filteredPeople.length > 0 &&
-          selectPerson === appliedQuery
-            ? `${name} (${born} - ${died})`
+          {selectedPersonData && selectPerson === appliedQuery
+            ? `${selectedPersonData.name} (${selectedPersonData.born} - ${selectedPersonData.died})`
             : 'No selected person'}
         </h1>
 
@@ -58,15 +68,16 @@ export const App: React.FC = () => {
 
           <DropDownMenu people={filteredPeople} />
         </div>
+
         {!filteredPeople.length && (
           <div
             className="
-                    notification
-                    is-danger
-                    is-light
-                    mt-3
-                    is-align-self-flex-start
-                  "
+                      notification
+                      is-danger
+                      is-light
+                      mt-3
+                      is-align-self-flex-start
+                     "
             role="alert"
             data-cy="no-suggestions-message"
           >
