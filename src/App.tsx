@@ -22,7 +22,7 @@ export const App: React.FC = () => {
     );
   }, [appliedQuery]);
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
 
     setSelectPerson(value);
@@ -31,7 +31,7 @@ export const App: React.FC = () => {
       setAppliedQuery('');
       setSelectedPersonData(null);
     } else {
-      applyQuery(value);
+      applyQuery(value.trim());
     }
   };
 
@@ -61,7 +61,7 @@ export const App: React.FC = () => {
               placeholder="Enter a part of the name"
               className="input"
               data-cy="search-input"
-              onChange={handleChange}
+              onChange={handleInputChange}
               value={selectPerson}
             />
           </div>
